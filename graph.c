@@ -1,9 +1,3 @@
-/*************************************************************************
-	> File Name: graph.c
-	> Author: 
-	> Mail: 
- ************************************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -15,6 +9,8 @@
 #include "graph.h"
 #include "read_seeding.h"
 #include "binarys_qsort.h"
+
+#define _DEBUG
 
 double DAG_time = 0;
 double findpath_time = 0;
@@ -139,28 +135,29 @@ void dynamic_programming_path(Graph *graph, uint32_t vertexNum, PATH_t *dist_pat
 	// {
 	// 	printf("vertex%d: %d, %d, %d, %d\n", i, vertexArr[i].read_begin,vertexArr[i].read_end,vertexArr[i].ref_begin,vertexArr[i].ref_end);
 	// }
+	#ifdef _DEBUG
+	printf("show the path\n");
+	int j;
+	for (i = 0; i < vertexNum; ++i)
+	{
+		j = i;
+		if ((out_degree[i] == 0))
+		{
+			// printf("vertex: %d\tdist = %f\tmean = %f\tread_end = %d\n", i, dist_path[i].dist, dist_path[j].mean, dist_path[j].read_end);
+			printf("path: ");
+			printf("%d->", i);
 
-	// printf("show the path\n");
-	// int j;
-	// for (i = 0; i < vertexNum; ++i)
-	// {
-	// 	j = i;
-	// 	if ((out_degree[i] == 0))
-	// 	{
-	// 		printf("vertex: %d\tdist = %f\tmean = %f\tread_end = %d\n", i, dist_path[i].dist, dist_path[j].mean, dist_path[j].read_end);
-	// 		// printf("path: ");
-	// 		// printf("%d->", i);
-
-	// 		j = dist_path[j].pre_node;
-	// 		while(j != -1)
-	// 		{
-	// 			// printf("%d->", j);
-	// 			printf("vertex: %d\tdist = %f\tmean = %f\tread_end = %d\n", j, dist_path[j].dist, dist_path[j].mean, dist_path[j].read_end);
-	// 			j = dist_path[j].pre_node;
-	// 		}
-	// 		printf("\n");
-	// 	}
-	// }
+			j = dist_path[j].pre_node;
+			while(j != -1)
+			{
+				printf("%d->", j);
+				// printf("vertex: %d\tdist = %f\tmean = %f\tread_end = %d\n", j, dist_path[j].dist, dist_path[j].mean, dist_path[j].read_end);
+				j = dist_path[j].pre_node;
+			}
+			printf("\n");
+		}
+	}
+	#endif
 
 }
 
@@ -211,7 +208,9 @@ float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, ui
 	memset(out_degree, 0, vertexNum);
 
 	ref_range = ref_end - ref_begin;
-	// printf("ref_range = %d\n",ref_range);
+	#ifdef _DEBUG
+	printf("ref_range = %d\n",ref_range);
+	#endif
 	time1 = clock();
 	for ( i = 0; i < vertexNum-1; ++i)
 	{
@@ -265,7 +264,7 @@ float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, ui
 
         		non_ioslated_point++;
             }
-            else if (ove2 == ove1) 
+            else if (ove2 == ove1) //linear
             {
 				graph->vnode[j].preedge[graph->vnode[j].adjacent_node].adjvex = i;
 				graph->vnode[j].preedge[graph->vnode[j].adjacent_node].weight = vertexArr[j].read_end - vertexArr[j].read_begin + 1 - (read_pos2 + 1 - vertexArr[j].read_begin);
@@ -310,11 +309,20 @@ float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, ui
 		}
 	}
 	DAG_time += (clock() - time1)/CLOCKS_PER_SEC;
+	#ifdef _DEBUG
+	fprintf(stderr, "[Process-Info] Generating Directed Acyclic Graph, total time %f seconds..\n",DAG_time);
+	#endif
 	if (non_ioslated_point != 0)
 	{
 		time1 = clock();
+		#ifdef _DEBUG
+		fprintf(stderr, "[Process-Info] Processing dynamic programming...");
+		#endif
 		dynamic_programming_path(graph, vertexNum, dist_path, out_degree, vertexArr);
 		findpath_time += (clock() - time1)/CLOCKS_PER_SEC;
+		#ifdef _DEBUG
+		fprintf(stderr, "[Process-Info] Dynamic programming, total time %f seconds..\n",findpath_time);
+		#endif
 	}
 
 	for ( i = 0; i < vertexNum; ++i)

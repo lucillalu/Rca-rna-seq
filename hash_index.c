@@ -7,6 +7,7 @@
 
 #define HASH_LEN 10000
 #define REFLEN 0Xffffffff
+#define _DEBUG
 
 hash_table* Table;
 uint8_t hash_kmer = 8;
@@ -75,8 +76,8 @@ int create_hash_table(uint8_t* target, uint32_t target_len, uint8_t r_i)
             key_part = key - target[i]*(1 << ((hash_kmer - 1) << 1));
             continue;
         }
-        table->bucket[key].value[table->bucket[key].value_index] = i; //position in target of the kmer
-        table->bucket[key].value_index += 1;
+        table->bucket[key].value[table->bucket[key].value_index] = i; //kmer's position in target
+        table->bucket[key].value_index += 1;//order of kmer appear
         // printf("value_index = %d\n", table->bucket[key].value_index);
         //cal the kmer's [1...hash_kmer-1] bit key as the next kmer's top hash_kmer-2 bit
         key_part = key - target[i]*(1 << ((hash_kmer - 1) << 1));
@@ -256,7 +257,7 @@ int hash_query(uint8_t* query, uint32_t query_len, uint32_t query_s, uint8_t r_i
             if (i == hits - 1)
             {
                 e1 = i;
-                if (e1 - s1 + 1 > 10)
+                if (e1 - s1 + 1 > 8)
                 {
                     uniseed2[r_i][hits_new].ref_begin = qs;
                     uniseed2[r_i][hits_new].ref_end = qe;
@@ -270,7 +271,7 @@ int hash_query(uint8_t* query, uint32_t query_len, uint32_t query_s, uint8_t r_i
         {
             e1 = i - 1;
 
-            if (e1 - s1 + 1 > 10)
+            if (e1 - s1 + 1 > 8)
             {
                 uniseed2[r_i][hits_new].ref_begin = qs;
                 uniseed2[r_i][hits_new].ref_end = qe;
@@ -295,6 +296,9 @@ int hash_query(uint8_t* query, uint32_t query_len, uint32_t query_s, uint8_t r_i
         uniseed3[r_i][index].read_end = uniseed2[r_i][i].read_end;
         uniseed3[r_i][index].ref_begin = uniseed2[r_i][i].ref_begin;
         uniseed3[r_i][index].ref_end = uniseed2[r_i][i].ref_end;
+        #ifdef _DEBUG
+        fprintf(stdout, "%d\t%d\t%d\t%d\t%d\t%d\n", index, uniseed3[r_i][index].read_begin,uniseed3[r_i][index].read_end,uniseed3[r_i][index].ref_begin,uniseed3[r_i][index].ref_end,uniseed3[r_i][index].read_end - uniseed3[r_i][index].read_begin + 1);
+        #endif
         fprintf(fp_tfu2, "%d\t%d\t%d\t%d\t%d\t%d\n", index, uniseed3[r_i][index].read_begin,uniseed3[r_i][index].read_end,uniseed3[r_i][index].ref_begin,uniseed3[r_i][index].ref_end,uniseed3[r_i][index].read_end - uniseed3[r_i][index].read_begin + 1);
         index++;
     }
@@ -333,6 +337,11 @@ void local_hash_process(uint8_t **target, uint32_t target_len, anchored_exons** 
     {  
         if (anchored_exon_num[r_i] == 0)
             continue;
+        #ifdef _DEBUG
+        fprintf(stderr, "re-seeding...output MB\n");
+        fprintf(stderr, "seed_id\tread_begin\tread_end\tref_begin\tref_end\tcov\n");
+        fprintf(stdout, "strand = %d\n", r_i);
+        #endif
         fprintf(fp_tfu2, "strand = %d\n", r_i);
         index = 0;
         for(i = 0; i<anchored_exon_num[r_i]; ++i)
@@ -342,6 +351,9 @@ void local_hash_process(uint8_t **target, uint32_t target_len, anchored_exons** 
             get_refseq(query, ae_len, ae_s);
             fprintf(fp_tfu2, "anchored_exon = %d\n", i);
             // printf("anchored_exon = %d\n", i);
+            #ifdef _DEBUG
+            fprintf(stdout, "anchored_exon = %d\n", i);
+            #endif
             tmp_uni = hash_query(query, ae_len, ae_s, r_i, index);
             if (tmp_uni == 0)
             {

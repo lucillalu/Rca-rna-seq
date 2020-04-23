@@ -2,8 +2,8 @@ CFLAGS=		-g -Wall -O2 -Wc++-compat
 CPPFLAGS=	-DHAVE_KALLOC
 #CPPFLAGS=
 INCLUDES=
-OBJS=		main.o desalt_index.o read_seeding.o bit_operation.o ktime.o binarys_qsort.o bseq.o load_unipath_size.o hash_index.o graph.o poa.o
-PROG=		deSALT
+OBJS=		main.o rrs_index.o read_seeding.o bit_operation.o ktime.o binarys_qsort.o bseq.o load_unipath_size.o hash_index.o graph.o poa.o
+PROG=		rrs
 # PROG_EXTRA=	sdust minimap2-lite
 LIBS=		-lm -lz -lpthread -lgomp -labpoa
 
@@ -24,7 +24,7 @@ LIBS=		-lm -lz -lpthread -lgomp -labpoa
 all:$(PROG)
 
 # extra:all $(PROG_EXTRA)
-deSALT:$(OBJS)
+rrs:$(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -L ./lib $(LIBS) -o $@
 
 # ksw2_extz2_sse41.o:ksw2_extz2_sse.c ksw2.h kalloc.h
@@ -49,7 +49,7 @@ deSALT:$(OBJS)
 # 		$(CC) -c $(CFLAGS) $(CPPFLAGS) -DKSW_CPU_DISPATCH $(INCLUDES) $< -o $@
 
 clean:
-		@rm -f *.o $(PROG)
+		@rm -f *.o *.lines $(PROG)
 
 depend:
 		(LC_ALL=C; export LC_ALL; makedepend -Y -- $(CFLAGS) $(CPPFLAGS) -- *.c)

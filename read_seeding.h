@@ -1,9 +1,3 @@
-/*************************************************************************
-	> File Name: read_seeding.h
-	> Author: 
-	> Mail: 
- ************************************************************************/
-
 #ifndef _READ_SEEDING_H
 #define _READ_SEEDING_H
 
@@ -40,6 +34,18 @@ typedef struct HITSEED
 	uint32_t pos_n;
 }hit_seed;
 
+typedef struct CO_HITSEED
+{
+	uint64_t uid;
+	uint32_t read_pos;
+	uint32_t uni_pos_off;
+	uint32_t length1; //length in read
+	uint32_t length2;// length in reference
+	uint32_t pos_n;
+	uint32_t cov;
+	uint32_t num;//# co-linear merged hits
+}co_hitseed;
+
 typedef struct UNI_SEED
 {
 	uint32_t read_begin;
@@ -47,6 +53,7 @@ typedef struct UNI_SEED
 	uint32_t seed_id; //record the first seed_id of those mems which can be merged
 	uint32_t ref_begin;
 	uint32_t ref_end;
+	uint32_t num;//# co-linear merged hits
 }uni_seed;
 
 typedef struct ANCHORED_EXON
@@ -57,15 +64,6 @@ typedef struct ANCHORED_EXON
 	uint32_t cov;
 	uint32_t length;
 }anchored_exons;
-
-typedef struct HCAE
-{
-	uint32_t id;
-	uint32_t ref_begin;
-	uint32_t ref_end;
-	uint32_t cov;
-	uint32_t length;
-}hcaes;
 
 typedef struct PATH
 {
@@ -90,7 +88,7 @@ typedef struct{
 }param_map;
 
 hit_seed** hitseed;
-// vertex_u** vertexu;
+co_hitseed** hitseed2;
 anchored_exons** anchored_exon;
 READ_t* query_info;
 
@@ -112,19 +110,18 @@ char temp_hit_dir[1024];
 char temp_ae_dir[1024];
 char temp_uni_dir[1024];
 char temp_uni2_dir[1024];
-char temp_hcae_dir[1024];
+// char temp_hcae_dir[1024];
 char temp_re_dir[1024];
 FILE *fp_tff;
-FILE *fp_ae;
+FILE *fp_ae;//anchored exon
 FILE *fp_tfu;
-FILE *fp_tfu2;
-FILE *fp_hcae;
-FILE *fp_re;
+FILE *fp_tfu2;//match block
+// FILE *fp_hcae;
+FILE *fp_re;//read end point
 
 //global variable
 extern uni_seed** uniseed;
 extern uni_seed** uniseed3;
-extern hcaes** hcae;
 extern uint32_t anchored_exon_num[2];
 extern uint8_t k_t;
 extern uint8_t seed_k_t;
@@ -136,6 +133,6 @@ extern int readlen_max;
 uint64_t read_bit1[2][((MAX_READLEN - 1) >> 5) + 1];
 
 int help_usage();
-int desalt_aln(int argc, char *argv[], const char *version);
+int rrs_aln(int argc, char *argv[], const char *version);
 
 #endif

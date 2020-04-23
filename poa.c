@@ -4,47 +4,60 @@
 #include <stdint.h>
 #include "abpoa.h"
 
+#define _DEBUG
+// #define _DDEBUG
+
 int seq_msa(int n_seqs, uint8_t** bseqs, int* seq_lens) {
     int i, j;
-    // for (i = 0; i < n_seqs; ++i)
+    #ifdef _DEBUG
+    for (i = 0; i < n_seqs; ++i)
+    {
+        printf("sequence length %d = %d\n", i, seq_lens[i]);
+    }
+    // for(int k=0;k<n_seqs;k++)
     // {
-    //     printf("seq_lens[%d] = %d\n", i, seq_lens[i]);
-    // }
-    
-    // for (i = 0; i < n_seqs; ++i)
+    //     for (i = 0; i < n_seqs; ++i)
     // {
     //     for (j = 0; j < seq_lens[i]; ++j)
     //     {
     //         printf("%c", "ACGTN-"[bseqs[i][j]]);
     //     }
     //     printf("\n");
-    // }
+    // }   
+    // } 
+    #endif
+
     // variables to store result
     uint8_t **cons_seq; int *cons_l, cons_n=0;
     uint8_t **msa_seq; int msa_l=0;
 
    // initialize variables
     abpoa_t *ab = abpoa_init();
+    #ifdef _DDEBUG
+    printf("locating0001\n");
+    #endif
     abpoa_para_t *abpt = abpoa_init_para();
+    #ifdef _DDEBUG
+    printf("locating0002\n");
+    #endif
      
     // output options
     abpt->out_msa = 1; // generate Row-Column multiple sequence alignment(RC-MSA), set 0 to disable
     // abpt->out_cons = 0; // generate consensus sequence, set 0 to disable
+    #ifdef _DDEBUG
+    printf("locating0003\n");
+    #endif
 
     abpoa_post_set_para(abpt);
-
-    // output to stdout
-    // fprintf(stdout, "=== output to stdout ===\n");
-
+    
     // perform abpoa-msa
-    // abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL);
-
-    // abpoa_reset_graph(ab, abpt, seq_lens[0]); // reset graph before re-use
-
-    // perform abpoa-msa
+    #ifdef _DDEBUG
+    printf("locating111\n");
+    #endif
     abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, NULL, &cons_seq, &cons_l, &cons_n, &msa_seq, &msa_l);
 
-    // fprintf(stdout, "=== output to variables ===\n");
+    #ifdef _DEBUG
+    fprintf(stdout, "=== multiple sequence alignmen output ===\n");
     // printf("cons_n = %d\n", cons_n);
     for (i = 0; i < cons_n; ++i) {
         fprintf(stdout, ">Consensus_sequence\n");
@@ -59,6 +72,7 @@ int seq_msa(int n_seqs, uint8_t** bseqs, int* seq_lens) {
         }
         fprintf(stdout, "\n");
     }
+    #endif
 
     if (cons_n) {
         for (i = 0; i < cons_n; ++i) free(cons_seq[i]); 
