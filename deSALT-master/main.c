@@ -1,21 +1,29 @@
+/*************************************************************************
+	> File Name: main.c
+	> Author: 
+	> Mail: 
+	> Created Time: 2018年05月08日 星期二 18时44分23秒
+ ************************************************************************/
+
 #include<stdio.h>
 #include<string.h>
 #include <time.h>
 
-#include "rrs_index.h"
+#include "desalt_index.h"
 #include "read_seeding.h"
-#include "rrs_aln.h"
 #include "ktime.h"
 
-#define VERSION "1.0.0"
+#define VERSION "1.5.1"
+#define CONTACT "Yadong Liu <hitliuyadong1994@163.com>"
 
 static int usage(void)
 {
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Program:	rrs (Third generation RNA sequence alignment)\n");
+	fprintf(stderr, "Program:	deSALT (Third generation RNA sequence alignment)\n");
 	fprintf(stderr, "Version:	%s\n", VERSION);
+	fprintf(stderr, "Contact:	%s\n\n", CONTACT);
 
-	fprintf(stderr, "Usage:		rrs <command> [options]\n\n");
+	fprintf(stderr, "Usage:		deSALT <command> [options]\n\n");
 	fprintf(stderr, "Command: \n");
 	fprintf(stderr, "		index	index reference sequence\n");
 	fprintf(stderr, "		aln	align long RNA sequence to reference\n");
@@ -31,9 +39,8 @@ int main(int argc, char *argv[])
 	double realtime0 = realtime();
 	double ts = clock();
 	if (argc < 2)	return usage();
-	if (strcmp(argv[1], "index") == 0)	r = rrs_index(argc, argv);
-	else if (strcmp(argv[1], "par") == 0)	r = rrs_par(argc, argv, VERSION);
-	else if (strcmp(argv[1], "aln") == 0)	r = rrs_aln(argc, argv);
+	if (strcmp(argv[1], "index") == 0)	r = desalt_index(argc, argv);
+	else if (strcmp(argv[1], "aln") == 0)	r = desalt_aln(argc, argv, VERSION);
 	else if (strcmp(argv[1], "--help") == 0)	return help_usage();
 	else {
 		fprintf(stderr, "[Waring!!!] wrong command: '%s'\n", argv[1]);

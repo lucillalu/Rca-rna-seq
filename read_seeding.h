@@ -112,12 +112,14 @@ char temp_uni_dir[1024];
 char temp_uni2_dir[1024];
 // char temp_hcae_dir[1024];
 char temp_re_dir[1024];
+char temp_hqr_dir[1024];
 FILE *fp_tff;
 FILE *fp_ae;//anchored exon
 FILE *fp_tfu;
 FILE *fp_tfu2;//match block
 // FILE *fp_hcae;
 FILE *fp_re;//read end point
+FILE *fp_hqr;
 
 //global variable
 extern uni_seed** uniseed;
@@ -133,6 +135,6 @@ extern int readlen_max;
 uint64_t read_bit1[2][((MAX_READLEN - 1) >> 5) + 1];
 
 int help_usage();
-int rrs_aln(int argc, char *argv[], const char *version);
+int rrs_par(int argc, char *argv[], const char *version);
 
 #endif

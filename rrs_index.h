@@ -1,5 +1,5 @@
-#ifndef _DESALT_INDEX_H
-#define _DESALT_INDEX_H
+#ifndef _RRS_INDEX_H
+#define _RRS_INDEX_H
 
 int rrs_index(int argc, char *argv[]);
 

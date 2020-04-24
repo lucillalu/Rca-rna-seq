@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include "abpoa.h"
+#include "read_seeding.h"
 
 #define _DEBUG
 // #define _DDEBUG
@@ -56,10 +57,18 @@ int seq_msa(int n_seqs, uint8_t** bseqs, int* seq_lens) {
     #endif
     abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, NULL, &cons_seq, &cons_l, &cons_n, &msa_seq, &msa_l);
 
+    for (j = 0; j < cons_l[0]; ++j)
+    {
+        fprintf(fp_hqr, "%c", "ACGTN"[cons_seq[0][j]]);
+    }
+    fprintf(fp_hqr, "\n");
+
     #ifdef _DEBUG
     fprintf(stdout, "=== multiple sequence alignmen output ===\n");
     // printf("cons_n = %d\n", cons_n);
+
     for (i = 0; i < cons_n; ++i) {
+        // printf("cons_l = %d\n", cons_l[i]);
         fprintf(stdout, ">Consensus_sequence\n");
         for (j = 0; j < cons_l[i]; ++j)
             fprintf(stdout, "%c", "ACGTN"[cons_seq[i][j]]);

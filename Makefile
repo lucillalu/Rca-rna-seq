@@ -2,10 +2,12 @@ CFLAGS=		-g -Wall -O2 -Wc++-compat
 CPPFLAGS=	-DHAVE_KALLOC
 #CPPFLAGS=
 INCLUDES=
-OBJS=		main.o rrs_index.o read_seeding.o bit_operation.o ktime.o binarys_qsort.o bseq.o load_unipath_size.o hash_index.o graph.o poa.o
+OBJS=		main.o rrs_index.o rrs_aln.o read_seeding.o bit_operation.o ktime.o binarys_qsort.o bseq.o load_unipath_size.o hash_index.o graph.o poa.o 
 PROG=		rrs
 # PROG_EXTRA=	sdust minimap2-lite
 LIBS=		-lm -lz -lpthread -lgomp -labpoa
+LIB_PATH =	./abPOA-master/lib
+I_PATH =	./abPOA-master/include
 
 # ifeq ($(sse2only),)
 # 	OBJS+=ksw2_extz2_sse41.o ksw2_extd2_sse41.o ksw2_exts2_sse41.o ksw2_extz2_sse2.o ksw2_extd2_sse2.o ksw2_exts2_sse2.o ksw2_dispatch.o
@@ -16,7 +18,7 @@ LIBS=		-lm -lz -lpthread -lgomp -labpoa
 .SUFFIXES:.c .o
 
 .c.o:
-		$(CC) -c $(CPPFLAGS) $(INCLUDES) $< -o $@  -I ./include -L ./lib $(LIBS) #$(CFLAGS)
+		$(CC) -c $(CPPFLAGS) $(INCLUDES) $< -o $@  -I ./ -I $(I_PATH) -L $(LIB_PATH) $(LIBS) #$(CFLAGS)
 
 # poa.o:poa.c ./lib/libabpoa.a
 # 	$(CC) -c $(CPPFLAGS) $< -o $@ 
@@ -25,7 +27,7 @@ all:$(PROG)
 
 # extra:all $(PROG_EXTRA)
 rrs:$(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -L ./lib $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(OBJS) -L $(LIB_PATH) $(LIBS) -o $@
 
 # ksw2_extz2_sse41.o:ksw2_extz2_sse.c ksw2.h kalloc.h
 # 		$(CC) -c -msse4 $(CFLAGS) $(CPPFLAGS) -DKSW_CPU_DISPATCH $(INCLUDES) $< -o $@

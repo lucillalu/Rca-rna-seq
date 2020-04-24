@@ -745,6 +745,7 @@ int seeding_core(int read_seq_core)
 	seqi = read_seq_core;
 	read_length = query_info[seqi].read_length;
 	fprintf(fp_re, "%d\t", read_length);
+	fprintf(fp_hqr, ">%s\n", query_info[seqi].name);
 	#ifdef _DEBUG
 	fprintf(stderr,"[Process-Info] processing the %d-th read\n", seqi);
 	fprintf(stderr,"[Process-Info] The %d-th read, name: %s, length: %d\n",seqi,query_info[seqi].name,read_length); 
@@ -835,6 +836,13 @@ int load_fasta_1pass(bseq_file_t *bf)
 	if (fp_re == NULL)
 	{
 		fprintf(stderr, "[Wrong] Failed to open file %s!!!\n", temp_re_dir);
+		exit(0);
+	}
+
+	fp_hqr = fopen(temp_hqr_dir, "w");
+	if (fp_hqr == NULL)
+	{
+		fprintf(stderr, "[Wrong] Failed to open file %s!!!\n", temp_hqr_dir);
 		exit(0);
 	}
 
@@ -984,6 +992,7 @@ int load_fasta_1pass(bseq_file_t *bf)
 	fclose(fp_tfu);
 	fclose(fp_tfu2);
 	fclose(fp_re);
+	fclose(fp_hqr);
 
 	return 0;
 }
@@ -1093,7 +1102,7 @@ static struct option long_option[] = {
 	{0,0,0,0}
 };
 
-int rrs_aln(int argc, char *argv[], const char *version)
+int rrs_par(int argc, char *argv[], const char *version)
 { 
 	fprintf(stderr, "[Main] rrs - De Bruijn graph-based Spliced Aligner for Long Transcriptome reads\n");
 	param_map *opt = (param_map* )calloc(1, sizeof(param_map));
@@ -1169,6 +1178,7 @@ int rrs_aln(int argc, char *argv[], const char *version)
 	memset(temp_uni2_dir, 0, 1024);
 	memset(temp_ae_dir, 0, 1024);
 	memset(temp_re_dir, 0, 1024);
+	memset(temp_hqr_dir, 0, 1024);
     if (opt->temp_file_perfix == NULL)
     {
         // strcpy(temp_hit_dir, "./hits.lines");
@@ -1176,6 +1186,7 @@ int rrs_aln(int argc, char *argv[], const char *version)
         strcpy(temp_ae_dir, "./ae.lines");
         strcpy(temp_uni2_dir, "./mb.lines");
         strcpy(temp_re_dir, "./re.lines");
+        strcpy(temp_hqr_dir, "./hq_reads.fasta");
     }
     else
     {
@@ -1189,6 +1200,8 @@ int rrs_aln(int argc, char *argv[], const char *version)
         strcat(temp_uni2_dir, "mb.lines");
         strcpy(temp_re_dir, opt->temp_file_perfix);
         strcat(temp_re_dir, "re.lines");
+        strcpy(temp_hqr_dir, opt->temp_file_perfix);
+        strcat(temp_hqr_dir, "hq_reads.fasta");
     }
 
     //variable in this file
