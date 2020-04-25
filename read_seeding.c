@@ -18,7 +18,7 @@
 #include "graph.h"
 #include "poa.h"
 
-#define _DEBUG
+// #define _DEBUG
 
 //variable extern
 uni_seed** uniseed = NULL;
@@ -58,7 +58,7 @@ static void init_map_param(param_map *opt)
 static inline void find_anchored_exon(uni_seed **uniseed, uint32_t *uniseed_length ,uint32_t *anchored_exon_num)
 {
 	uint8_t r_c;
-	uint32_t j, k, s1, e1, co_num;
+	uint32_t su_i, j, k, s1, e1, co_num;
 	uint32_t id, cov;
 	uint32_t max_intron_length = 200000;
 	uint32_t max_len = 0, tmp_id = 0;
@@ -69,8 +69,8 @@ static inline void find_anchored_exon(uni_seed **uniseed, uint32_t *uniseed_leng
 	{	
 		#ifdef _DEBUG
 		fprintf(stdout, "strand = %d\n",r_c);
-		#endif
 		fprintf(fp_ae, "strand = %d\n",r_c);
+		#endif
         if(uniseed_length[r_c] == 0)
         {
             anchored_exon_num[r_c] = 0;
@@ -102,7 +102,7 @@ static inline void find_anchored_exon(uni_seed **uniseed, uint32_t *uniseed_leng
 				}
 			}
 			e1 = j - 1;
-			if (e1 - s1 + 1 > 3)//condition 1
+			if (e1 - s1 + 1 > 2)//condition 1
 			{
 				anchored_exon[r_c][id].id = id;
 				anchored_exon[r_c][id].ref_begin = uniseed[r_c][s1].ref_begin;
@@ -117,14 +117,14 @@ static inline void find_anchored_exon(uni_seed **uniseed, uint32_t *uniseed_leng
 				}
 				id++;
 			}
-			else if (e1 - s1 + 1 <= 3)
+			else if (e1 - s1 + 1 <= 2)
 			{
 				co_num = 0;
 				for (k = s1; k <= e1; ++k)
 				{
 					co_num += uniseed[r_c][k].num;
 				}
-				if (co_num > 3)//condition 2
+				if (co_num > 2)//condition 2
 				{
 					anchored_exon[r_c][id].id = id;
 					anchored_exon[r_c][id].ref_begin = uniseed[r_c][s1].ref_begin;
@@ -157,8 +157,8 @@ static inline void find_anchored_exon(uni_seed **uniseed, uint32_t *uniseed_leng
 				anchored_exon[r_c][id].ref_end = anchored_exon[r_c][j].ref_end;
 				anchored_exon[r_c][id].cov = anchored_exon[r_c][j].cov;
 				anchored_exon[r_c][id].length = anchored_exon[r_c][j].length;
-        		fprintf(fp_ae, "%d\t%d\t%d\t%d\t%d\n", anchored_exon[r_c][id].id,anchored_exon[r_c][id].ref_begin,anchored_exon[r_c][id].ref_end,anchored_exon[r_c][id].cov,anchored_exon[r_c][id].length);
         		#ifdef _DEBUG
+         		fprintf(fp_ae, "%d\t%d\t%d\t%d\t%d\n", anchored_exon[r_c][id].id,anchored_exon[r_c][id].ref_begin,anchored_exon[r_c][id].ref_end,anchored_exon[r_c][id].cov,anchored_exon[r_c][id].length);
         		fprintf(stdout, "%d\t%d\t%d\t%d\t%d\n", anchored_exon[r_c][id].id,anchored_exon[r_c][id].ref_begin,anchored_exon[r_c][id].ref_end,anchored_exon[r_c][id].cov,anchored_exon[r_c][id].length);
         		#endif
         		id++;
@@ -175,7 +175,6 @@ static inline void map_to_ref(co_hitseed **hitseed2, uint32_t *memid, uint32_t *
 	uint32_t su_i = 0;
 	for (r_i = 0; r_i < 2; ++r_i)//r_i=0, 1
 	{
-		fprintf(fp_tfu, "strand=%d\n",r_i);
         if(memid[r_i] == 0)
         {
             uniseed_length[r_i] = 0;
@@ -199,12 +198,21 @@ static inline void map_to_ref(co_hitseed **hitseed2, uint32_t *memid, uint32_t *
                 // printf("uniseed[%d][%d][%d].read_end = %d\n",r_i,su_i,uniseed[r_i][su_i].read_end);
                 // printf("uniseed[%d][%d][%d].ref_begin = %d\n",r_i,su_i,uniseed[r_i][su_i].ref_begin);
                 // printf("uniseed[%d][%d][%d].ref_end = %d\n",r_i,su_i,uniseed[r_i][su_i].ref_end);
-                fprintf(fp_tfu, "%d\t%d\t%d\t%d\t%d\n", uniseed[r_i][su_i].seed_id,uniseed[r_i][su_i].read_begin,uniseed[r_i][su_i].read_end,uniseed[r_i][su_i].ref_begin,uniseed[r_i][su_i].ref_end);
-
 				su_i++;
 			}
 		}
 		uniseed_length[r_i] = su_i;
+
+		qsort(uniseed[r_i], uniseed_length[r_i], sizeof(uni_seed), compare_uniseed2);
+        //sort by read_begin position
+
+        #ifdef _DEBUG
+		fprintf(fp_tfu, "strand=%d\n",r_i);
+        for (su_i = 0; su_i < uniseed_length[r_i]; ++su_i)
+        {
+        	fprintf(fp_tfu, "%d\t%d\t%d\t%d\t%d\n", uniseed[r_i][su_i].seed_id,uniseed[r_i][su_i].read_begin,uniseed[r_i][su_i].read_end,uniseed[r_i][su_i].ref_begin,uniseed[r_i][su_i].ref_end);
+        }
+        #endif
 	}
 }
 
@@ -246,12 +254,13 @@ int change_hit_to_HCAE(uint64_t (*read_bit)[((MAX_READLEN - 1) >> 5) + 1], uint3
 	uint64_t kmer_pos_uni = 0;
 
 	// fprintf(fp_tff, "uid\tseed_id\tread_pos\tuni_pos_off\tlength\tpos_n\n");
+	#ifdef _DEBUG
 	fprintf(fp_ae, "id\tref_begin\tref_end\tcov\tlength\n");
 	fprintf(fp_tfu, "seed_id\tread_begin\tread_end\tref_begin\tref_end\tcov\n");
 	//seed
-	#ifdef _DEBUG
 	fprintf(stderr, "[Process-Info] Using seed-and-extension to find hits between read and reference...\n");
 	#endif
+
 	for ( r_i = 0; r_i < 2; ++r_i)//r_i=0, 1
 	{
 		// fprintf(fp_tff, "strand=%d\n",r_i);
@@ -465,7 +474,7 @@ int change_hit_to_HCAE(uint64_t (*read_bit)[((MAX_READLEN - 1) >> 5) + 1], uint3
 	return 0;
 }
 
-int get_split_read(uint32_t dist_max_index, PATH_t *dist_path, float *mean, uint32_t *read_end)
+int get_split_read(uint32_t dist_max_index, PATH_t *dist_path, uint32_t *read_end)
 {
 	int32_t j;
 	uint32_t cnt = 0;
@@ -476,7 +485,6 @@ int get_split_read(uint32_t dist_max_index, PATH_t *dist_path, float *mean, uint
 	tmp_read_end = dist_path[dist_max_index].read_end;
 	if (tmp_mean != 0 && tmp_read_end != 0)
 	{
-		mean[cnt] = dist_path[dist_max_index].mean;
 		read_end[cnt] = dist_path[dist_max_index].read_end;
 		cnt++;
 	}
@@ -486,7 +494,6 @@ int get_split_read(uint32_t dist_max_index, PATH_t *dist_path, float *mean, uint
 	{
 		if (dist_path[j].mean != tmp_mean || dist_path[j].read_end != tmp_read_end)
 		{
-			mean[cnt] = dist_path[j].mean;
 			read_end[cnt] = dist_path[j].read_end;
 			cnt++;
 			tmp_mean = dist_path[j].mean;
@@ -520,11 +527,10 @@ int get_read_seq(uint8_t *read, uint8_t* read_seq, uint32_t start, uint32_t leng
 
 int find_hit_in_HCAE(uint32_t seqi, uint32_t read_length)
 {
-	int i;
+	int i,j,k;
 	uint8_t r_i;
 	//hash_kmer = 8
 	uint8_t *qseq0[2];
-	uint8_t ***read_seq;
 	uint32_t ref_begin[2],ref_end[2];
 	uint32_t uniseed2_length[2] = {0,0}; 
 
@@ -559,9 +565,9 @@ int find_hit_in_HCAE(uint32_t seqi, uint32_t read_length)
     PATH_t* path1;
     path0 = (PATH_t* )malloc(uniseed2_length[0]*sizeof(PATH_t));
     path1 = (PATH_t* )malloc(uniseed2_length[1]*sizeof(PATH_t));
-    float **mean;
 	uint32_t **read_end;
 	int **seq_len;
+	uint8_t **read_seq;
 	int cnt;
 
     uint32_t num = (uniseed2_length[0] < uniseed2_length[1]) ? uniseed2_length[1]: uniseed2_length[0];
@@ -639,55 +645,76 @@ int find_hit_in_HCAE(uint32_t seqi, uint32_t read_length)
 		return 0;
 	}
 
-	mean = (float**)calloc(2, sizeof(float*));
 	read_end = (uint32_t**)calloc(2, sizeof(uint32_t*));
+	for (r_i = 0; r_i < 2; ++r_i)
+	{
+		read_end[r_i] = (uint32_t*)calloc(uniseed2_length[r_i], sizeof(uint32_t));
+	}
+	if (read_end == NULL)
+	{
+		fprintf(stderr, "memory wrong, read_end\n" );
+	}
+
 	seq_len = (int**)calloc(2,sizeof(int*));
 	for (r_i = 0; r_i < 2; ++r_i)
 	{
-		mean[r_i] = (float*)calloc(uniseed2_length[r_i], sizeof(float));
-		read_end[r_i] = (uint32_t*)calloc(uniseed2_length[r_i], sizeof(uint32_t));
 		seq_len[r_i] = (int*)calloc(uniseed2_length[r_i], sizeof(int));
 	}
-	read_seq = (uint8_t***)calloc(2, sizeof(uint8_t**));
+	if (seq_len == NULL)
+	{
+		fprintf(stderr, "memory wrong, seq_len\n" );
+	}
 
     if (temp_strand == 1) //-
     {
-    	cnt = get_split_read(max_index1, path1, mean[1], read_end[1]);
-		read_seq[1] = (uint8_t** )calloc(cnt, sizeof(uint8_t*));
-    	for (i = 0; i < cnt; ++i)
-    	{
-    		tmp_read_length = read_length - read_end[1][i];
-    		seq_len[1][i] = tmp_read_length;
-    		read_seq[1][i] = (uint8_t*)calloc(tmp_read_length, sizeof(uint8_t));
-    		get_read_seq(qseq0[1], read_seq[1][i], read_end[1][i], tmp_read_length);
-    		read_length = read_end[1][i];
-    	}
-    	#ifdef _DEBUG
-    	fprintf(stderr, "[Phase-Info] Processing Partial order alignment, generating consensus sequence...\n");
-    	#endif
+    	cnt = get_split_read(max_index1, path1, read_end[1]);
     	if (cnt != 0)
     	{
-    		seq_msa(cnt, read_seq[1], seq_len[1]);
+    		read_seq = (uint8_t** )calloc(cnt, sizeof(uint8_t*));
+    		for (i = 0; i < cnt; ++i)
+    		{
+    			tmp_read_length = read_length - read_end[1][i];
+    			seq_len[1][i] = tmp_read_length;
+    			read_seq[i] = (uint8_t*)calloc(tmp_read_length, sizeof(uint8_t));
+    			get_read_seq(qseq0[1], read_seq[i], read_end[1][i], tmp_read_length);
+    			read_length = read_end[1][i];
+    		}
+    		#ifdef _DEBUG
+    		fprintf(stderr, "[Phase-Info] Processing Partial order alignment, generating consensus sequence...\n");
+    		#endif
+    		fprintf(fp_hqr, ">%s\n", query_info[seqi].name);
+    		seq_msa(cnt, read_seq, seq_len[1]);
+    	}
+    	else
+    	{
+    		fprintf(fp_hqr, ">%s\n", query_info[seqi].name);
+    		fprintf(fp_hqr, "%s\n", query_info[seqi].read_seq);
     	}
     }
 	else if (temp_strand == 0)
     {
-    	cnt = get_split_read(max_index0, path0, mean[0], read_end[0]);
-    	read_seq[0] = (uint8_t** )calloc(cnt, sizeof(uint8_t*));
-    	for (i = 0; i < cnt; ++i)
-    	{
-    		tmp_read_length = read_length - read_end[0][i];
-    		seq_len[0][i] = tmp_read_length;
-    		read_seq[0][i] = (uint8_t*)calloc(tmp_read_length, sizeof(uint8_t));
-    		get_read_seq(qseq0[0], read_seq[0][i], read_end[0][i], tmp_read_length);
-    		read_length = read_end[0][i];
-    	}
-    	#ifdef _DEBUG
-    	fprintf(stderr, "[Phase-Info] Processing Partial order alignment, generating consensus sequence...\n");
-    	#endif
+    	cnt = get_split_read(max_index0, path0, read_end[0]);
     	if (cnt != 0)
     	{
-    		seq_msa(cnt, read_seq[0], seq_len[0]);
+    		read_seq = (uint8_t** )calloc(cnt, sizeof(uint8_t*));
+    		for (i = 0; i < cnt; ++i)
+    		{
+    			tmp_read_length = read_length - read_end[0][i];
+    			seq_len[0][i] = tmp_read_length;
+    			read_seq[i] = (uint8_t*)calloc(tmp_read_length, sizeof(uint8_t));
+    			get_read_seq(qseq0[0], read_seq[i], read_end[0][i], tmp_read_length);
+    			read_length = read_end[0][i];
+    		}
+    		#ifdef _DEBUG
+    		fprintf(stderr, "[Phase-Info] Processing Partial order alignment, generating consensus sequence...\n");
+    		#endif
+    		fprintf(fp_hqr, ">%s\n", query_info[seqi].name);
+    		seq_msa(cnt, read_seq, seq_len[0]);
+    	}
+    	else
+    	{
+    		fprintf(fp_hqr, ">%s\n", query_info[seqi].name);
+    		fprintf(fp_hqr, "%s\n", query_info[seqi].read_seq);
     	}
     }
 	else  //both strand
@@ -705,25 +732,30 @@ int find_hit_in_HCAE(uint32_t seqi, uint32_t read_length)
 
 	for(r_i = 0;r_i < 2;++r_i)
 	{
-		if (mean[r_i] != NULL) free(mean[r_i]);
-		if (read_end[r_i] != NULL) free(read_end[r_i]);
-		if (seq_len[r_i] != NULL) free(seq_len[r_i]);
-	}
-	if (mean != NULL) free(mean);
-	if (read_end != NULL) free(read_end);
-	if (seq_len[r_i] != NULL) free(seq_len);
-
-// printf("cnt = %d\n", cnt);
-	for(r_i = 0;r_i < 2;++r_i)
-	{
 		if (qseq0[r_i] != NULL) free(qseq0[r_i]);
 	}
-	// for(i = 0;i < cnt;++i)
-	// {
-	// 	if (read_seq[temp_strand][i]!=NULL) free(read_seq[temp_strand][i]);
-	// }
-	// if (read_seq[temp_strand]!=NULL) free(read_seq[temp_strand]);
-	// if (read_seq != NULL) free(read_seq);
+
+	for(r_i = 0;r_i < 2;++r_i)
+	{
+		if (read_end[r_i] != NULL) free(read_end[r_i]);
+	}
+	if (read_end != NULL) free(read_end);
+
+
+	for(r_i = 0;r_i < 2;++r_i)
+	{
+		if (seq_len[r_i] != NULL) free(seq_len[r_i]);
+	}
+	if (seq_len != NULL) free(seq_len);
+
+	if (cnt != 0)
+	{
+		for (r_i = 0; r_i < cnt; ++r_i)
+    	{
+    		if (read_seq[r_i] != NULL) free(read_seq[r_i]);
+    	}
+    	if (read_seq != NULL) free(read_seq);
+    }
 
     return 0;
 
@@ -745,7 +777,6 @@ int seeding_core(int read_seq_core)
 	seqi = read_seq_core;
 	read_length = query_info[seqi].read_length;
 	fprintf(fp_re, "%d\t", read_length);
-	fprintf(fp_hqr, ">%s\n", query_info[seqi].name);
 	#ifdef _DEBUG
 	fprintf(stderr,"[Process-Info] processing the %d-th read\n", seqi);
 	fprintf(stderr,"[Process-Info] The %d-th read, name: %s, length: %d\n",seqi,query_info[seqi].name,read_length); 
@@ -803,13 +834,7 @@ int load_fasta_1pass(bseq_file_t *bf)
 	//printf("re_bt=%d\n",re_bt);
 	re_2bt = 64 - seed_k_t;//re_2bt = 49
 
-	// fp_tff = fopen(temp_hit_dir, "w");
-	// if (fp_tff == NULL)
-	// {
-	// 	fprintf(stderr, "[Wrong] Failed to open file %s!!!\n", temp_hit_dir);
-	// 	exit(0);
-	// }
-
+	#ifdef _DEBUG
 	fp_ae = fopen(temp_ae_dir, "w");
 	if (fp_ae == NULL)
 	{
@@ -831,6 +856,7 @@ int load_fasta_1pass(bseq_file_t *bf)
 		exit(0);
 	}
 	fprintf(fp_tfu2, "id\tread_begin\tread_end\tref_begin\tref_end\n");
+	#endif
 
 	fp_re = fopen(temp_re_dir, "w");
 	if (fp_re == NULL)
@@ -898,7 +924,7 @@ int load_fasta_1pass(bseq_file_t *bf)
     {
         uniseed3[r_i] = (uni_seed* )calloc(10000 , sizeof(uni_seed)); //the threshold should be change
     }
-    if (uniseed3== NULL)
+    if (uniseed3 == NULL)
 	{
 		fprintf(stderr, "memory wrong, uniseed3\n" );
 	}
@@ -918,8 +944,8 @@ int load_fasta_1pass(bseq_file_t *bf)
 
 		uint32_t seqii_i;
 		// for(seqii_i = 0; seqii_i < seqii; seqii_i++)
-		// for(seqii_i = 5000; seqii_i < 5100; seqii_i++)
-		seqii_i = 5070;//5070 5214 5249
+		for(seqii_i = 5069; seqii_i < 5080; seqii_i++)
+		// seqii_i = 5070;//5070 5214 5249
 		{
 			fprintf(fp_re, "%d\t", seqii_i);
 			seeding_core(seqii_i);
@@ -987,10 +1013,11 @@ int load_fasta_1pass(bseq_file_t *bf)
 	}
 	if(query_info != NULL)	free(query_info);
 
-	// fclose(fp_tff);
+	#ifdef _DEBUG
 	fclose(fp_ae);
 	fclose(fp_tfu);
 	fclose(fp_tfu2);
+	#endif
 	fclose(fp_re);
 	fclose(fp_hqr);
 
@@ -1104,7 +1131,7 @@ static struct option long_option[] = {
 
 int rrs_par(int argc, char *argv[], const char *version)
 { 
-	fprintf(stderr, "[Main] rrs - De Bruijn graph-based Spliced Aligner for Long Transcriptome reads\n");
+	fprintf(stderr, "[Main] rrs - Partitioning Long Transcriptome Reads by Rolling Circle Amplyfication Sequencing\n");
 	param_map *opt = (param_map* )calloc(1, sizeof(param_map));
 	init_map_param(opt);
 	int c;
@@ -1173,31 +1200,35 @@ int rrs_par(int argc, char *argv[], const char *version)
 	if (index_dir[strlen(index_dir) - 1] != '/') strcat(index_dir, "/");
 	read_fastq = strdup(argv[optind + 2]);
 
-	// memset(temp_hit_dir, 0, 1024);
+	#ifdef _DEBUG
 	memset(temp_uni_dir, 0, 1024);
 	memset(temp_uni2_dir, 0, 1024);
 	memset(temp_ae_dir, 0, 1024);
-	memset(temp_re_dir, 0, 1024);
-	memset(temp_hqr_dir, 0, 1024);
     if (opt->temp_file_perfix == NULL)
     {
-        // strcpy(temp_hit_dir, "./hits.lines");
         strcpy(temp_uni_dir, "./uni.lines");
         strcpy(temp_ae_dir, "./ae.lines");
         strcpy(temp_uni2_dir, "./mb.lines");
-        strcpy(temp_re_dir, "./re.lines");
-        strcpy(temp_hqr_dir, "./hq_reads.fasta");
     }
     else
     {
-        // strcpy(temp_hit_dir, opt->temp_file_perfix);
-        // strcat(temp_hit_dir, "hits.lines");
         strcpy(temp_uni_dir, opt->temp_file_perfix);
         strcat(temp_uni_dir, "uni.lines");
         strcpy(temp_ae_dir, opt->temp_file_perfix);
         strcat(temp_ae_dir, "ae.lines");
         strcpy(temp_uni2_dir, opt->temp_file_perfix);
         strcat(temp_uni2_dir, "mb.lines");
+    }
+	#endif
+	memset(temp_re_dir, 0, 1024);
+	memset(temp_hqr_dir, 0, 1024);
+    if (opt->temp_file_perfix == NULL)
+    {
+        strcpy(temp_re_dir, "./re.lines");
+        strcpy(temp_hqr_dir, "./hq_reads.fasta");
+    }
+    else
+    {
         strcpy(temp_re_dir, opt->temp_file_perfix);
         strcat(temp_re_dir, "re.lines");
         strcpy(temp_hqr_dir, opt->temp_file_perfix);

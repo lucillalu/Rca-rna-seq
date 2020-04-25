@@ -10,7 +10,7 @@
 #include "read_seeding.h"
 #include "binarys_qsort.h"
 
-#define _DEBUG
+// #define _DEBUG
 
 double DAG_time = 0;
 double findpath_time = 0;
@@ -143,15 +143,15 @@ void dynamic_programming_path(Graph *graph, uint32_t vertexNum, PATH_t *dist_pat
 		j = i;
 		if ((out_degree[i] == 0))
 		{
-			// printf("vertex: %d\tdist = %f\tmean = %f\tread_end = %d\n", i, dist_path[i].dist, dist_path[j].mean, dist_path[j].read_end);
-			printf("path: ");
-			printf("%d->", i);
+			printf("vertex: %d\tdist = %f\tmean = %f\tread_end = %d\n", i, dist_path[i].dist, dist_path[j].mean, dist_path[j].read_end);
+			// printf("path: ");
+			// printf("%d->", i);
 
 			j = dist_path[j].pre_node;
 			while(j != -1)
 			{
-				printf("%d->", j);
-				// printf("vertex: %d\tdist = %f\tmean = %f\tread_end = %d\n", j, dist_path[j].dist, dist_path[j].mean, dist_path[j].read_end);
+				// printf("%d->", j);
+				printf("vertex: %d\tdist = %f\tmean = %f\tread_end = %d\n", j, dist_path[j].dist, dist_path[j].mean, dist_path[j].read_end);
 				j = dist_path[j].pre_node;
 			}
 			printf("\n");
@@ -225,16 +225,19 @@ float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, ui
 			// {
 			// 	break;
 			// }
+			//if two MB from the same seed, they can not be connected
+			if (vertexArr[i].read_end == vertexArr[j].read_end || vertexArr[i].read_begin == vertexArr[j].read_begin)
+				continue;
         
             ove1 = (int32_t)(vertexArr[j].read_begin - read_pos2);
             ove2 = (int32_t)(vertexArr[j].ref_begin - ref_pos2);
-            ove3 = (int32_t)(ref_pos2 - vertexArr[j].ref_begin);
+            ove3 = (int32_t)(vertexArr[i].ref_begin - vertexArr[j].ref_end);
 
             // if (ove1 > max_read_join_gap)
             // 	continue;
             
 
-			if ((ove1 > 0 && ove2 > 0 && ove2 > ove1/2) || (ove1 >= -8 && ove1 <= 0  && ove2 >= -8))  //5  1/error rate
+			if ((ove1 > 0 && ove2 >= 0 && ( ove2 > ove1/2 || abs(ove2 - ove1)==1 )) || (ove1 >= -8 && ove1 <= 0  && ove2 >= -8))  //5  1/error rate
             {
 				//the first part is normal, if (ove1 - ove2) < Eindel, there is an edge
 				//the last part, beaucse the begin of exon and the begin of intron have the same bases 
@@ -253,7 +256,7 @@ float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, ui
                 else
 					graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty = min(abs(gap)*param/(float)weight, intron_penalty);
                 
-				// if ((j == 93 || j == 94 || j == 95)&&(i == 93 || i == 94 || i == 95))
+				// if ((j == 35 || j == 36 || j == 37)&&(i == 35 || i == 36 || i == 37))
 				// {
 				// 	printf("(%d,%d)\n", i, j);
 				// 	printf("penalty = %f\n", graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty);
@@ -291,11 +294,11 @@ float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, ui
 				weight = vertexArr[j].read_end - vertexArr[j].read_begin + 1 - diff;
 				graph->vnode[j].preedge[graph->vnode[j].adjacent_node].weight = min(weight, dis1);
 				
-				graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty = (float)ref_range/(ove3*0.15);
+				graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty = (float)ref_range/(ove3*0.14);
 				// printf("penalty = %f\n", graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty);
             	graph->vnode[j].preedge[graph->vnode[j].adjacent_node].reverse_edge = 1;
 
-    //         	if ((j == 93 || j == 94 || j == 95)&&(i == 93 || i == 94 || i == 95))
+    //         	if ((j == 35 || j == 36 || j == 37)&&(i == 35 || i == 36 || i == 37))
 				// {
 				// 	printf("(%d,%d)\n", i, j);
 				// 	printf("penalty = %f\n", graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty);

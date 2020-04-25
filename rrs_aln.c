@@ -9,8 +9,8 @@
 int rrs_aln_usage(void)
 {
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Usage:	rrs index <ref.fa> <index_route>\n");
-	fprintf(stderr, "		build deBGA index file with default 22-kmer. You can get more deBGA information from https://github.com/HongzheGuo/deBGA");
+	fprintf(stderr, "Usage:	rrs aln <index_route> <reads.fasta>\n");
+	fprintf(stderr, "		using deSALT aln reads to reference. You can get more deSALT information from https://github.com/ydLiu/deSALT");
 	fprintf(stderr, "\n");
 	return 1;
 }

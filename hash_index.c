@@ -7,7 +7,7 @@
 
 #define HASH_LEN 10000
 #define REFLEN 0Xffffffff
-#define _DEBUG
+// #define _DEBUG
 
 hash_table* Table;
 uint8_t hash_kmer = 8;
@@ -165,6 +165,7 @@ int hash_query(uint8_t* query, uint32_t query_len, uint32_t query_s, uint8_t r_i
             //found
             for (i = 0; i < value_idx; ++i)
             {
+                uniseed2[r_i][hits].seed_id = hits;
                 uniseed2[r_i][hits].ref_begin = query_s;
                 uniseed2[r_i][hits].ref_end = uniseed2[r_i][hits].ref_begin + tmp_hash - 1;
                 uniseed2[r_i][hits].read_begin = table->bucket[t_k].value[i];
@@ -202,7 +203,7 @@ int hash_query(uint8_t* query, uint32_t query_len, uint32_t query_s, uint8_t r_i
             }
             for (i = 0; i < value_idx; ++i)
             {
-                // uniseed2[r_i][hits].idx = hits;
+                uniseed2[r_i][hits].seed_id = hits;
                 uniseed2[r_i][hits].ref_begin = read_off + query_s;
                 uniseed2[r_i][hits].ref_end = uniseed2[r_i][hits].ref_begin + tmp_hash - 1;
                 uniseed2[r_i][hits].read_begin = table->bucket[t_k].value[i];
@@ -292,14 +293,15 @@ int hash_query(uint8_t* query, uint32_t query_len, uint32_t query_s, uint8_t r_i
 
     for(i=0;i<hits_new;++i)
     {
+        uniseed3[r_i][index].seed_id = uniseed2[r_i][i].seed_id;
         uniseed3[r_i][index].read_begin = uniseed2[r_i][i].read_begin;
         uniseed3[r_i][index].read_end = uniseed2[r_i][i].read_end;
         uniseed3[r_i][index].ref_begin = uniseed2[r_i][i].ref_begin;
         uniseed3[r_i][index].ref_end = uniseed2[r_i][i].ref_end;
         #ifdef _DEBUG
         fprintf(stdout, "%d\t%d\t%d\t%d\t%d\t%d\n", index, uniseed3[r_i][index].read_begin,uniseed3[r_i][index].read_end,uniseed3[r_i][index].ref_begin,uniseed3[r_i][index].ref_end,uniseed3[r_i][index].read_end - uniseed3[r_i][index].read_begin + 1);
-        #endif
         fprintf(fp_tfu2, "%d\t%d\t%d\t%d\t%d\t%d\n", index, uniseed3[r_i][index].read_begin,uniseed3[r_i][index].read_end,uniseed3[r_i][index].ref_begin,uniseed3[r_i][index].ref_end,uniseed3[r_i][index].read_end - uniseed3[r_i][index].read_begin + 1);
+        #endif
         index++;
     }
 
@@ -341,17 +343,16 @@ void local_hash_process(uint8_t **target, uint32_t target_len, anchored_exons** 
         fprintf(stderr, "re-seeding...output MB\n");
         fprintf(stderr, "seed_id\tread_begin\tread_end\tref_begin\tref_end\tcov\n");
         fprintf(stdout, "strand = %d\n", r_i);
-        #endif
         fprintf(fp_tfu2, "strand = %d\n", r_i);
+        #endif
         index = 0;
         for(i = 0; i<anchored_exon_num[r_i]; ++i)
         {
             ae_s = anchored_exon[r_i][i].ref_begin;
             ae_len = anchored_exon[r_i][i].ref_end - anchored_exon[r_i][i].ref_begin + 1;
             get_refseq(query, ae_len, ae_s);
-            fprintf(fp_tfu2, "anchored_exon = %d\n", i);
-            // printf("anchored_exon = %d\n", i);
             #ifdef _DEBUG
+            fprintf(fp_tfu2, "anchored_exon = %d\n", i);
             fprintf(stdout, "anchored_exon = %d\n", i);
             #endif
             tmp_uni = hash_query(query, ae_len, ae_s, r_i, index);
