@@ -10,13 +10,12 @@
 int seq_msa(int n_seqs, uint8_t** bseqs, int* seq_lens) {
     int i, j;
     #ifdef _DEBUG
+    printf("n_seqs = %d\n", n_seqs);
     for (i = 0; i < n_seqs; ++i)
     {
         printf("sequence length %d = %d\n", i, seq_lens[i]);
     }
-    // for(int k=0;k<n_seqs;k++)
-    // {
-    //     for (i = 0; i < n_seqs; ++i)
+    // for (i = 0; i < n_seqs; ++i)
     // {
     //     for (j = 0; j < seq_lens[i]; ++j)
     //     {
@@ -24,7 +23,6 @@ int seq_msa(int n_seqs, uint8_t** bseqs, int* seq_lens) {
     //     }
     //     printf("\n");
     // }   
-    // } 
     #endif
 
     // variables to store result
@@ -40,10 +38,10 @@ int seq_msa(int n_seqs, uint8_t** bseqs, int* seq_lens) {
     // abpt->out_cons = 0; // generate consensus sequence, set 0 to disable
 
     abpoa_post_set_para(abpt);
-    
+    // printf("yes0\n");
     // perform abpoa-msa
     abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, NULL, &cons_seq, &cons_l, &cons_n, &msa_seq, &msa_l);
-
+    // printf("yes1\n");
     for (j = 0; j < cons_l[0]; ++j)
     {
         fprintf(fp_hqr, "%c", "ACGTN"[cons_seq[0][j]]);

@@ -17,16 +17,19 @@ double findpath_time = 0;
 double qsort_time = 0;
 
 //global variant
-Graph Dp_graph;
+Graph* Dp_graph = NULL;
 
 void initGraph()
 {
 	uint8_t r_i;
+	uint32_t r_ii;
+	Dp_graph = (Graph* )calloc(thread_n,sizeof(Graph));
+	if(Dp_graph == NULL) fprintf(stderr, "[Wrong] Failed to allocate graph memory!\n");
 
-	Dp_graph.vnode = (VNode* )calloc(new_seed_cnt*pos_n_max,sizeof(VNode));
-	if(Dp_graph.vnode == NULL) 
+	for(r_i = 0; r_i < thread_n; ++r_i)
 	{
-		printf("wrong for allocate graph memory!\n");
+		Dp_graph[r_i].vnode = (VNode* )calloc(new_seed_cnt*pos_n_max,sizeof(VNode));
+		if(Dp_graph[r_i].vnode == NULL) printf("wrong for allocate graph memory!\n");
 	}
 }
 
@@ -34,11 +37,15 @@ void delGraph()
 {	
 	uint8_t r_i;
 	uint32_t r_ii;
-	for (r_ii = 0; r_ii < new_seed_cnt*pos_n_max; ++r_ii)
+	for(r_i = 0; r_i < thread_n; ++r_i)
 	{
-		if (Dp_graph.vnode[r_ii].preedge != NULL)	free(Dp_graph.vnode[r_ii].preedge);
+		for (r_ii = 0; r_ii < new_seed_cnt*pos_n_max; ++r_ii)
+		{
+			if (Dp_graph[r_i].vnode[r_ii].preedge != NULL)	free(Dp_graph[r_i].vnode[r_ii].preedge);
+		}
+		if (Dp_graph[r_i].vnode != NULL)	free(Dp_graph[r_i].vnode);
 	}
-	if (Dp_graph.vnode != NULL)	free(Dp_graph.vnode);
+	if (Dp_graph != NULL)	free(Dp_graph);
 }
 
 static float min(float a, float b)
@@ -161,7 +168,7 @@ void dynamic_programming_path(Graph *graph, uint32_t vertexNum, PATH_t *dist_pat
 
 }
 
-float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, uint32_t ref_end, PATH_t *dist_path, uint32_t *max_index, uint8_t *out_degree)
+float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, uint32_t ref_end, PATH_t *dist_path, uint32_t *max_index, uint8_t *out_degree, uint8_t tid)
 {
 	int32_t i,j;
 
@@ -183,7 +190,7 @@ float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, ui
 	int search_step = (vertexNum < 50)? vertexNum : 50;
 	float max_distance = 0;
 	
-	Graph *graph = &Dp_graph;
+	Graph *graph = &Dp_graph[tid];
 
 	double time1 = clock();
 	qsort(vertexArr, vertexNum, sizeof(uni_seed), compare_uniseed2);//by read start position
@@ -237,7 +244,8 @@ float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, ui
             // 	continue;
             
 
-			if ((ove1 > 0 && ove2 >= 0 && ( ove2 > ove1/2 || abs(ove2 - ove1)==1 )) || (ove1 >= -8 && ove1 <= 0  && ove2 >= -8))  //5  1/error rate
+			// if ((ove1 > 0 && ove2 >= 0 && ( ove2 > ove1/2 || abs(ove2 - ove1)==1 )) || (ove1 >= -8 && ove1 <= 0  && ove2 >= -8))  //5  1/error rate
+            if ((ove1 > 0 && ove2 >= 0 && ( ove2 > ove1/2 || abs(ove2 - ove1)==1 )) || (ove1 >= -8 && ove2 >= -8))  //5  1/error rate
             {
 				//the first part is normal, if (ove1 - ove2) < Eindel, there is an edge
 				//the last part, beaucse the begin of exon and the begin of intron have the same bases 
@@ -256,7 +264,7 @@ float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, ui
                 else
 					graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty = min(abs(gap)*param/(float)weight, intron_penalty);
                 
-				// if ((j == 35 || j == 36 || j == 37)&&(i == 35 || i == 36 || i == 37))
+				// if ((j == 215 || j == 216 || j == 217)&&(i == 215 || i == 216 || i == 217))
 				// {
 				// 	printf("(%d,%d)\n", i, j);
 				// 	printf("penalty = %f\n", graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty);
@@ -294,11 +302,11 @@ float creatGraph(uni_seed *vertexArr, uint32_t vertexNum, uint32_t ref_begin, ui
 				weight = vertexArr[j].read_end - vertexArr[j].read_begin + 1 - diff;
 				graph->vnode[j].preedge[graph->vnode[j].adjacent_node].weight = min(weight, dis1);
 				
-				graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty = (float)ref_range/(ove3*0.14);
+				graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty = (float)20*ref_range/ove3;
 				// printf("penalty = %f\n", graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty);
             	graph->vnode[j].preedge[graph->vnode[j].adjacent_node].reverse_edge = 1;
 
-    //         	if ((j == 35 || j == 36 || j == 37)&&(i == 35 || i == 36 || i == 37))
+				// if ((j == 215 || j == 216 || j == 217)&&(i == 215 || i == 216 || i == 217))
 				// {
 				// 	printf("(%d,%d)\n", i, j);
 				// 	printf("penalty = %f\n", graph->vnode[j].preedge[graph->vnode[j].adjacent_node].penalty);

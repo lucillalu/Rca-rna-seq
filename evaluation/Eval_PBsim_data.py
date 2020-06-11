@@ -12,7 +12,7 @@ import cal_PBsim_background
 # To enable importing from samscripts submodulew
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 SCRIPT_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, ".."))
-sys.path.append(os.path.join(SCRIPT_PATH, 'samscripts/src'))
+sys.path.append(os.path.join(SCRIPT_PATH, 'samscripts'))
 import Annotation_formats
 import part_cal
 import utility_sam
@@ -301,8 +301,8 @@ def processData(datafolder, resultfile, annotationfile, Array, SS_list, csv_path
     static_dict = {}
     #"A": with exon < 30 "B": exon > 30
     #"C": single splicing "D": alternative splicing
-    #"E": 2-5 exons "F": 6-9 exons "G": >10 exons
-    key = ["All", "A", "B", "C", "D", "E", "F", "G"]
+    # key = ["All", "A", "B", "C", "D", "E", "F", "G"]
+    key = ["All", "A", "B", "C", "D"]
     for i in range(len(key)):
         static_dict[key[i]] = Static()
 
@@ -343,7 +343,7 @@ def processData(datafolder, resultfile, annotationfile, Array, SS_list, csv_path
         # print(simFolder)
         # print(simQName)
 
-        simFileSuffix = 'Sim_G1_S'
+        simFileSuffix = 'SimG2_S'
 
         pos = simQName.find('_')
         pos2 = simQName.find('_part')
@@ -403,7 +403,7 @@ def processData(datafolder, resultfile, annotationfile, Array, SS_list, csv_path
                         maf_startpos = int(elements[2])
                         maf_length = int(elements[3])
                         maf_strand = elements[4]
-                        maf_reflen = int(elements[5])
+                        maf_reflen = int(int(elements[5])/3)
                     if maf_qname == simQName:
                         # maf_startpos = int(elements[2])
                         # maf_length = int(elements[3])
@@ -418,25 +418,33 @@ def processData(datafolder, resultfile, annotationfile, Array, SS_list, csv_path
         # IMPORTANT: If the reads were generated from an annotation on reverse strand
         #            expected partial alignments must be reversed
         if annotation.strand == Annotation_formats.GFF_STRANDRV:
-            maf_startpos = maf_reflen - maf_length - maf_startpos
+            maf_startpos = maf_reflen*3 - maf_length - maf_startpos
+            if maf_startpos > maf_reflen*2:
+                maf_startpos = maf_startpos - maf_reflen*2
+            elif maf_startpos >maf_reflen:
+                maf_startpos = maf_startpos - maf_reflen
 
         # Calculating expected partial alignmetns from MAF and annotations
         sigA = False
         sigB = True
         sigC = False
         sigD = False
-        sigE = False
-        sigF = False
-        sigG = False
 
         # 1. Calculating the index of the first exon
         # i - the index of exon currently being considered
         i = 0
+        flag_wrong = 0
         while annotation.items[i].getLength() <= maf_startpos:
             maf_startpos -= annotation.items[i].getLength()
             i += 1
+            if len(annotation.items) == i:
+                flag_wrong = 1
+                break
+        if flag_wrong == 1:
+            continue
 
         # Calculating expected partial alignments by filling up exons using maf_length
+        maf_length = int(maf_length/3)
         expected_partial_alignments = []
         while maf_length > 0:
             start = annotation.items[i].start + maf_startpos
@@ -452,6 +460,8 @@ def processData(datafolder, resultfile, annotationfile, Array, SS_list, csv_path
                 expected_partial_alignments.append((start, end))
                 maf_length -= length
                 i += 1
+                if len(annotation.items) == i:
+                    maf_length = 0
             else:
                 expected_partial_alignments.append((start, start + maf_length))
                 maf_length = 0
@@ -470,12 +480,6 @@ def processData(datafolder, resultfile, annotationfile, Array, SS_list, csv_path
 
         #level4
         n = len(expected_partial_alignments)
-        if n < 6:
-            sigE = True
-        elif n > 5 and n < 10:
-            sigF = True
-        else:
-            sigG = True
 
         #level3
         if simGeneName in ss_array:
@@ -498,7 +502,7 @@ def processData(datafolder, resultfile, annotationfile, Array, SS_list, csv_path
 
         if getChromName(samline_list[0].rname) != getChromName(annotation.seqname):
             static_dict["All"].Total_aligned_reads += 1
-            part_cal.cal(static_dict,sigA, sigC, sigE, sigF, "Total_aligned_reads", 1)
+            part_cal.cal(static_dict,sigA, sigC, "Total_aligned_reads", 1)
         else:
             for samline in samline_list:
                 # sl_startpos = samline.pos - 1   # SAM positions are 1-based
@@ -539,7 +543,7 @@ def processData(datafolder, resultfile, annotationfile, Array, SS_list, csv_path
                 if tmp_aln > readlength:
                     tmp_aln = readlength
                 static_dict["All"].Total_aligned_bases += tmp_aln
-                part_cal.cal(static_dict, sigA, sigC, sigE, sigF, "Total_aligned_bases", tmp_aln)
+                part_cal.cal(static_dict, sigA, sigC,"Total_aligned_bases", tmp_aln)
 
             #*************************************************************************************
             #*************************************************************************************
@@ -548,28 +552,28 @@ def processData(datafolder, resultfile, annotationfile, Array, SS_list, csv_path
 
             if num_hit_exons == numparts:
                 static_dict["All"].Hit100 += 1
-                part_cal.cal(static_dict,sigA, sigC, sigE, sigF, "Hit100", 1)
+                part_cal.cal(static_dict,sigA, sigC, "Hit100", 1)
             if num_hit_exons >= int(0.8 * numparts):
                 static_dict["All"].Hit80 += 1
-                part_cal.cal(static_dict,sigA, sigC, sigE, sigF, "Hit80", 1)
+                part_cal.cal(static_dict,sigA, sigC,  "Hit80", 1)
 
             sam_l = len(samline_list)
             if num_recover_exons == numparts:
                 static_dict["All"].ExR100 += 1
-                part_cal.cal(static_dict,sigA, sigC, sigE, sigF, "ExR100", 1)
+                part_cal.cal(static_dict,sigA, sigC, "ExR100", 1)
                 if num_recover_exons == sam_l:
                     static_dict["All"].ExA100 += 1
-                    part_cal.cal(static_dict,sigA, sigC, sigE, sigF, "ExA100", 1)
+                    part_cal.cal(static_dict,sigA, sigC, "ExA100", 1)
             if num_recover_exons >= int(0.8 * numparts):
                 static_dict["All"].ExR80 += 1
-                part_cal.cal(static_dict,sigA, sigC, sigE, sigF, "ExR80", 1)
+                part_cal.cal(static_dict,sigA, sigC, "ExR80", 1)
                 if num_recover_exons >= int(0.8 * sam_l):
                     static_dict["All"].ExA80 += 1
-                    part_cal.cal(static_dict,sigA, sigC, sigE, sigF, "ExA80", 1)
+                    part_cal.cal(static_dict,sigA, sigC, "ExA80", 1)
             static_dict["All"].Total_aligned_exons += num_recover_exons
-            part_cal.cal(static_dict,sigA, sigC, sigE, sigF, "Total_aligned_exons", num_recover_exons)
+            part_cal.cal(static_dict,sigA, sigC, "Total_aligned_exons", num_recover_exons)
             static_dict["All"].Total_aligned_reads += 1
-            part_cal.cal(static_dict,sigA, sigC, sigE, sigF, "Total_aligned_reads", 1)
+            part_cal.cal(static_dict,sigA, sigC, "Total_aligned_reads", 1)
             #*************************************************************************************
 
 
@@ -590,15 +594,15 @@ def processData(datafolder, resultfile, annotationfile, Array, SS_list, csv_path
     static_dict["D"].Total_reads = Array.Total_level3_AS_reads
     static_dict["D"].Total_bases = Array.Total_level3_AS_bases
     static_dict["D"].Total_expected_exons = Array.Total_level3_AS_expected_exons
-    static_dict["E"].Total_reads = Array.Total_level4_2_5_reads
-    static_dict["E"].Total_bases = Array.Total_level4_2_5_bases
-    static_dict["E"].Total_expected_exons = Array.Total_level4_2_5_expected_exons
-    static_dict["F"].Total_reads = Array.Total_level4_6_9_reads
-    static_dict["F"].Total_bases = Array.Total_level4_6_9_bases
-    static_dict["F"].Total_expected_exons = Array.Total_level4_6_9_expected_exons
-    static_dict["G"].Total_reads = Array.Total_level4_10_reads
-    static_dict["G"].Total_bases = Array.Total_level4_10_bases
-    static_dict["G"].Total_expected_exons = Array.Total_level4_10_expected_exons
+    # static_dict["E"].Total_reads = Array.Total_level4_2_5_reads
+    # static_dict["E"].Total_bases = Array.Total_level4_2_5_bases
+    # static_dict["E"].Total_expected_exons = Array.Total_level4_2_5_expected_exons
+    # static_dict["F"].Total_reads = Array.Total_level4_6_9_reads
+    # static_dict["F"].Total_bases = Array.Total_level4_6_9_bases
+    # static_dict["F"].Total_expected_exons = Array.Total_level4_6_9_expected_exons
+    # static_dict["G"].Total_reads = Array.Total_level4_10_reads
+    # static_dict["G"].Total_bases = Array.Total_level4_10_bases
+    # static_dict["G"].Total_expected_exons = Array.Total_level4_10_expected_exons
 
     with open(csv_path, "w") as fw:
         csv_write = csv.writer(fw, dialect = 'excel')
@@ -649,12 +653,12 @@ if __name__ == '__main__':
     group_list = sys.argv[4]
     ss_list = sys.argv[5]
     csv_path = sys.argv[6]
+    hq_read_file = sys.argv[7]
 
-    Array = cal_PBsim_background.process(datafolder, group_list, annotationfile, ss_list)
+    Array = cal_PBsim_background.process(datafolder, group_list, annotationfile, ss_list, hq_read_file)
 
     print("Total reads: ", Array.Total_reads)
     print("Total bases: ", Array.Total_bases)
     print("Total exons:", Array.Total_expected_exons)
-
 
     processData(datafolder, resultfile, annotationfile, Array, ss_list, csv_path)

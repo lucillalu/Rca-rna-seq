@@ -15,7 +15,10 @@
 #define TEMP_FILE_PERFIRX "1pass_"
 #define MAX_READLEN 1000000 //2^15+1 > readlen_max = 30000
 #define LOCAL_HASH_KMER 8
+#define MAX_PTHREAD 48
 #define MAX_READ_JOIN_GAP 2000
+
+pthread_rwlock_t rwlock;
 
 typedef struct READ
 {
@@ -84,12 +87,20 @@ typedef struct{
  	uint16_t pos_n_max;
 	char *temp_file_perfix;
 	int readlen_max;
+	uint8_t thread_n;
 	int max_read_join_gap;
 }param_map;
 
-hit_seed** hitseed;
-co_hitseed** hitseed2;
-anchored_exons** anchored_exon;
+//pthread
+typedef struct THREAD_DATA
+{
+	uint8_t tid;
+	uint32_t seqn;
+} thread_aln_t;
+
+hit_seed*** hitseed;
+co_hitseed*** hitseed2;
+anchored_exons*** anchored_exon;
 READ_t* query_info;
 
 //variable in this file
@@ -122,17 +133,17 @@ FILE *fp_re;//read end point
 FILE *fp_hqr;
 
 //global variable
-extern uni_seed** uniseed;
-extern uni_seed** uniseed3;
-extern uint32_t anchored_exon_num[2];
+extern uni_seed*** uniseed;
+extern uni_seed*** uniseed3;
 extern uint8_t k_t;
 extern uint8_t seed_k_t;
 extern uint32_t new_seed_cnt;
 extern uint16_t Eindel;
 extern int waitingLen;
 extern int readlen_max;
+extern uint8_t thread_n;
 
-uint64_t read_bit1[2][((MAX_READLEN - 1) >> 5) + 1];
+uint64_t read_bit1[MAX_PTHREAD][2][((MAX_READLEN - 1) >> 5) + 1];
 
 int help_usage();
 int rrs_par(int argc, char *argv[], const char *version);
